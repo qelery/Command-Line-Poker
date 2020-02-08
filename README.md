@@ -16,6 +16,8 @@ Command line implementation of pot-limit Texas Hold 'Em Poker in Python.
 * main.py - main game classes
 * handranker.py - functions for scoring players' hands
 * display.py - functions for updating screen
+<br>
+<br>
 
 ![](example1.png)
 
