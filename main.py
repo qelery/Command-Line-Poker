@@ -18,7 +18,7 @@ import display
 import handranker
 
 
-class Card(object):
+class Card:
     """Class representing a standard playing card"""
     def __init__(self, rank, suit):
         self.rank_value = rank
@@ -58,7 +58,7 @@ class Card(object):
 
 
 
-class Deck(object):
+class Deck:
     """Class representing a standard deck of 52 playing cards"""
     def __init__(self):
         self.cards = []
@@ -94,7 +94,7 @@ class Deck(object):
 
 
 
-class Player(object):
+class Player:
     """Class representing a player.
 
     Args:
@@ -302,7 +302,7 @@ def random_play(self):
 
 
 
-class Table(object):
+class Table:
     """Class representing the poker table"""
     def __init__(self):
         self.community = []
@@ -328,7 +328,7 @@ class Table(object):
 
 
 
-class Poker(object):
+class Poker:
     """This class is the control center of the game."""
     def __init__(self):
         """
