@@ -16,6 +16,10 @@ Future project ideas:
 import random
 import display
 import handranker
+from termcolor import colored
+from time import sleep
+
+
 
 
 class Card:
@@ -39,10 +43,10 @@ class Card:
             14 : 'A'
         }
         self.suit_symbol_dict = {
-            'C': '♣',
-            'D': '♦',
-            'H': '♥',
-            'S': '♠'
+            'C': colored('♣', 'green', ),
+            'D': colored('♦', 'cyan', ),
+            'H': colored('♥', 'red', ),
+            'S': colored('♠', 'yellow')
         }
         self.rank_symbol = self.rank_symbol_dict[self.rank_value]
         self.suit_symbol = self.suit_symbol_dict[self.suit_value]
@@ -138,24 +142,24 @@ def human_play(self):
         valid_moves = ['f', '(f)', 'fold', 'folded', 'a', '(a)', 'all', 'all in', 'all-in']
         # If not enough chips to call
         if self.chips <= abs(self.bet - self.table.last_bet):
-            prompt = f" >>> Input (a) to go all-in or (f) to fold.   "
+            prompt = f" >>> Press (a) to go all-in or (f) to fold.   "
         else:
             valid_moves.extend(['c', '(c)', 'call', 'called'])
-            prompt = f" >>> Input (c) to call {self.table.last_bet}, (a) to go all-in, or (f) to fold.   "
+            prompt = f" >>> Press (c) to call {self.table.last_bet}, (a) to go all-in, or (f) to fold.   "
     elif self.table.num_times_raised < 4:
         valid_moves = ['c', '(c)', 'f', '(f)', 'fold', 'folded']
         if self.bet == self.table.last_bet:
             valid_moves.extend(['b', '(b)', 'bet', 'check', 'checked'])
-            prompt = f" >>> Input (c) to check, (b) to bet {self.table.raise_amount} chips, or (f) to fold.   "
+            prompt = f" >>> Press (c) to check, (b) to bet {self.table.raise_amount} chips, or (f) to fold.   "
         else:
             valid_moves.extend(['r', '(r)', 'raise', 'raised', 'call', 'called'])
-            prompt = f" >>> Input (c) to call {self.table.last_bet} chips, (r) to raise to {self.table.raise_amount} chips, or (f) to fold.   "
+            prompt = f" >>> Press (c) to call {self.table.last_bet} chips, (r) to raise to {self.table.raise_amount} chips, or (f) to fold.   "
     # If there have been 4 bets/raises in current round
     else:
         valid_moves = ['c', '(c)', 'call', 'called', 'f', '(f)', 'fold', 'folded']
-        prompt = f" >>> Input (c) to call {self.table.last_bet} chips or (f) to fold.   "
+        prompt = f" >>> Press (c) to call {self.table.last_bet} chips or (f) to fold.   "
     while choice.lower() not in valid_moves:
-            choice = input(prompt)
+            choice = input_no_return(prompt)
     # Return player's choice'
     choice = choice.lower()
     if 'b' in choice:
@@ -701,20 +705,62 @@ class Poker:
         self.active_players = [player for player in self.active_players if player.isInGame]
         if len(self.active_players) == 1:
             display.show_table(self.initial_players, self.table, 0)
-            display.show_game_winners(self.initial_players, [self.active_players[0].name], self.long_pause)
+            display.show_game_winners(self.initial_players, [self.active_players[0].name])
             return True
         else:
             while True:
                 display.clear_screen()
-                user_choice = input("Continue on to next hand? Yes or No   ")
-                if 'y' in user_choice.lower():
-                    return False
-                elif 'n' in user_choice.lower():
+                user_choice = input_no_return("Continue on to next hand? Press (enter) to continue or (n) to stop.   ")
+                if 'n' in user_choice.lower():
                     max_chips = max(self.active_players, key=lambda player: player.chips).chips
                     winners_names = [player.name for player in self.active_players if player.chips == max_chips]
                     display.show_table(self.initial_players, self.table, 0)
-                    display.show_game_winners(self.initial_players, winners_names, self.long_pause)
+                    display.show_game_winners(self.initial_players, winners_names)
                     return True
+                return False
+
+
+class _Getch:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self):
+        try:
+            self.impl = _GetchWindows()
+        except ImportError:
+            self.impl = _GetchUnix()
+
+    def __call__(self): return self.impl()
+
+
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return msvcrt.getch()
+
+
+def input_no_return(prompt):
+    print(prompt)
+    getch = _Getch()
+    return getch();
 
 
 if __name__ == '__main__':
