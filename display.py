@@ -121,7 +121,7 @@ def show_player_stats(initial_players, isShowDown=False):
                     chips = f'             Chips:{this_player.chips:>6}'
                 print_msg = f"{this_player.name:>11}'s hand:    {hand_str}{chips}{bet}"
                 if this_player.isDealer:
-                    print_msg += f'       <Button>'
+                    print_msg += f'       <Dealer>'
                 if this_player.isSB:
                     print_msg += f'       <SB>'
                 if this_player.isBB:
