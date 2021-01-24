@@ -16,6 +16,10 @@ Future project ideas:
 import random
 import display
 import handranker
+from termcolor import colored
+from time import sleep
+
+
 
 
 class Card:
@@ -39,10 +43,10 @@ class Card:
             14 : 'A'
         }
         self.suit_symbol_dict = {
-            'C': '♣',
-            'D': '♦',
-            'H': '♥',
-            'S': '♠'
+            'C': colored('♣', 'green', ),
+            'D': colored('♦', 'cyan', ),
+            'H': colored('♥', 'red', ),
+            'S': colored('♠', 'yellow')
         }
         self.rank_symbol = self.rank_symbol_dict[self.rank_value]
         self.suit_symbol = self.suit_symbol_dict[self.suit_value]
@@ -111,6 +115,8 @@ class Player:
         self.bet = 0
         self.hand = []
         self.isDealer = False
+        self.isBB = False
+        self.isSB = False
         self.isFolded = False
         self.isFirstAct = False
         self.isLocked = False
@@ -138,24 +144,24 @@ def human_play(self):
         valid_moves = ['f', '(f)', 'fold', 'folded', 'a', '(a)', 'all', 'all in', 'all-in']
         # If not enough chips to call
         if self.chips <= abs(self.bet - self.table.last_bet):
-            prompt = f" >>> Input (a) to go all-in or (f) to fold.   "
+            prompt = f" >>> Press (a) to go all-in or (f) to fold.   "
         else:
             valid_moves.extend(['c', '(c)', 'call', 'called'])
-            prompt = f" >>> Input (c) to call {self.table.last_bet}, (a) to go all-in, or (f) to fold.   "
+            prompt = f" >>> Press (c) to call {self.table.last_bet}, (a) to go all-in, or (f) to fold.   "
     elif self.table.num_times_raised < 4:
         valid_moves = ['c', '(c)', 'f', '(f)', 'fold', 'folded']
         if self.bet == self.table.last_bet:
             valid_moves.extend(['b', '(b)', 'bet', 'check', 'checked'])
-            prompt = f" >>> Input (c) to check, (b) to bet {self.table.raise_amount} chips, or (f) to fold.   "
+            prompt = f" >>> Press (c) to check, (b) to bet {self.table.raise_amount} chips, or (f) to fold.   "
         else:
             valid_moves.extend(['r', '(r)', 'raise', 'raised', 'call', 'called'])
-            prompt = f" >>> Input (c) to call {self.table.last_bet} chips, (r) to raise to {self.table.raise_amount} chips, or (f) to fold.   "
+            prompt = f" >>> Press (c) to call {self.table.last_bet} chips, (r) to raise to {self.table.raise_amount} chips, or (f) to fold.   "
     # If there have been 4 bets/raises in current round
     else:
         valid_moves = ['c', '(c)', 'call', 'called', 'f', '(f)', 'fold', 'folded']
-        prompt = f" >>> Input (c) to call {self.table.last_bet} chips or (f) to fold.   "
+        prompt = f" >>> Press (c) to call {self.table.last_bet} chips or (f) to fold.   "
     while choice.lower() not in valid_moves:
-            choice = input(prompt)
+            choice = input_no_return(prompt)
     # Return player's choice'
     choice = choice.lower()
     if 'b' in choice:
@@ -377,11 +383,23 @@ class Poker:
         first act = the player who bets first during a new round of betting
         """
         num_players = len(self.active_players)
+        for i in range(num_players):
+            self.active_players[i].isSB = False
+            self.active_players[i].isBB = False
         if self.table.hands_played == 1:
             # Dealer will be randomly assigned
             x = random.randrange(0, num_players)
             self.active_players[x].isDealer = True
-            self.active_players[(x + 3) % num_players].isFirstAct = True
+
+            # in 2 player poker, the dealer is SB and acts first pre-flop
+            if len(self.active_players) == 2:
+                self.active_players[x].isFirstAct               = True
+                self.active_players[x].isSB                     = True
+                self.active_players[(x + 1) % num_players].isBB = True
+            else:
+                self.active_players[(x + 3) % num_players].isFirstAct = True
+                self.active_players[(x + 2) % num_players].isBB = True
+                self.active_players[(x + 1) % num_players].isSB = True
         else:
             # Dealer position moves to the left
             old_dealer_index = [player.isDealer for player in self.initial_players].index(True)
@@ -392,7 +410,17 @@ class Poker:
                 if player_to_left in self.active_players:
                     player_to_left.isDealer = True
                     new_dealer_index = [player.isDealer for player in self.active_players].index(True)
-                    self.active_players[(new_dealer_index + 3) % num_players].isFirstAct = True
+
+                    # in 2 player poker, the dealer is SB and acts first pre-flop
+                    if len(self.active_players) == 2:
+                        self.active_players[new_dealer_index].isFirstAct               = True
+                        self.active_players[new_dealer_index].isSB                     = True
+                        self.active_players[(new_dealer_index + 1) % num_players].isBB = True
+                    else:
+                        self.active_players[(new_dealer_index + 3) % num_players].isFirstAct = True
+                        self.active_players[(new_dealer_index + 2) % num_players].isBB = True
+                        self.active_players[(new_dealer_index + 1) % num_players].isSB = True
+
                     break
 
     def reset_hand(self):
@@ -517,8 +545,13 @@ class Poker:
             # Place blind bets
             for i in range(num_players):
                 if self.active_players[i].isDealer:
+
                     # Player to left of dealer makes small blind bet
-                    small_blind_player = self.active_players[(i + 1) % num_players]
+                    small_blind_player = None
+                    for player in self.active_players:
+                        if player.isSB:
+                            small_blind_player = player
+
                     small_blind = int(self.table.big_blind / 2)
                     display.show_bet_blind(small_blind_player.name, 'small', self.pause)
                     if small_blind_player.chips >  small_blind:
@@ -526,9 +559,15 @@ class Poker:
                     else:
                         self.player_moves(small_blind_player, 'all-in')
                     display.show_table(self.initial_players, self.table, 0)
+                    
                     # Player two spaces to the left of dealer makes big blind bet
-                    big_blind_player = self.active_players[(i + 2) % num_players]
+                    big_blind_player = None
+                    for player in self.active_players:
+                        if player.isBB:
+                            big_blind_player = player
+
                     display.show_bet_blind(big_blind_player.name, 'big', self.pause)
+
                     if big_blind_player.chips > self.table.big_blind:
                         self.make_bet(big_blind_player, self.table.big_blind)
                     else:
@@ -701,20 +740,66 @@ class Poker:
         self.active_players = [player for player in self.active_players if player.isInGame]
         if len(self.active_players) == 1:
             display.show_table(self.initial_players, self.table, 0)
-            display.show_game_winners(self.initial_players, [self.active_players[0].name], self.long_pause)
+            display.show_game_winners(self.initial_players, [self.active_players[0].name])
             return True
         else:
             while True:
                 display.clear_screen()
-                user_choice = input("Continue on to next hand? Yes or No   ")
-                if 'y' in user_choice.lower():
-                    return False
-                elif 'n' in user_choice.lower():
+                user_choice = input_no_return("Continue on to next hand? Press (enter) to continue or (n) to stop.   ")
+                if 'n' in user_choice.lower():
                     max_chips = max(self.active_players, key=lambda player: player.chips).chips
                     winners_names = [player.name for player in self.active_players if player.chips == max_chips]
                     display.show_table(self.initial_players, self.table, 0)
-                    display.show_game_winners(self.initial_players, winners_names, self.long_pause)
+                    display.show_game_winners(self.initial_players, winners_names)
                     return True
+                return False
+
+
+class _Getch:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self):
+        try:
+            self.impl = _GetchWindows()
+        except ImportError:
+            self.impl = _GetchUnix()
+
+    def __call__(self): return self.impl()
+
+
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return msvcrt.getch()
+
+
+def input_no_return(prompt):
+    print(prompt)
+    getch = _Getch()
+    character = getch()
+    if character == chr(27):
+        print("Escape pressed. Aborting game.")
+        exit()
+    return character
 
 
 if __name__ == '__main__':
