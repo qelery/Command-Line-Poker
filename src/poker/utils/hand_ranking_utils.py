@@ -1,11 +1,11 @@
 """
 #######################################################################################################################
-This implementation of a poker hand ranker assigns each hand a score, as a way to quickly compare between hands of 
+This implementation of a poker hand ranker assigns each hand a score, as a way to quickly compare between hands of
 different ranks, and different hands of the same rank. The first digit scores the rank (e.g. Full House, Straight, etc) 
 of the overall hand score. All successive digit PAIRS in the score represent certain values that may be needed to 
 break ties between hands of that particular rank.  
 
-A kicker card (tie breaker card) is evaluated in cases where the rules of poker call for one.
+A kicker card (tie-breaker card) is evaluated in cases where the rules of game call for one.
 #######################################################################################################################
 """
 
@@ -28,16 +28,16 @@ card_int_str_dict = {
 }
 
 handrank_int_str_dict = {
-    10 : 'Royal Flush',
-    9  : 'Straight Flush',
-    8  : 'Four of a Kind',
-    7  : 'Full House',
-    6  : 'Flush',
-    5  : 'Straight',
-    4  : 'Three of a Kind',
-    3  : 'Two Pair',
-    2  : 'One Pair',
-    1  : 'High Card',
+    10: 'Royal Flush',
+    9: 'Straight Flush',
+    8: 'Four of a Kind',
+    7: 'Full House',
+    6: 'Flush',
+    5: 'Straight',
+    4: 'Three of a Kind',
+    3: 'Two Pair',
+    2: 'One Pair',
+    1: 'High Card',
 }
 
 
@@ -86,7 +86,7 @@ def score_hand(hand):
     hand = list(hand)
     hand.sort(key=lambda card: card.rank_value, reverse=True)
     score_functions = [score_royal_flush, score_straight_flush, score_num_of_kind, score_full_house, score_flush,
-                       score_straight, score_num_of_kind,score_two_pair, score_num_of_kind, score_high_card]
+                       score_straight, score_num_of_kind, score_two_pair, score_num_of_kind, score_high_card]
     params = [[hand], [hand], [hand, 4], [hand], [hand], [hand], [hand, 3], [hand], [hand, 2], [hand]]
     for func, param in zip(score_functions, params):
         score = func(*param)
@@ -156,7 +156,8 @@ def assign_kicker_card(winners, showdown_players):
     """
     kicker_card_rank = None
     if winners[0].best_hand_rank in ['High Card', 'One Pair', 'Three of a Kind', 'Four of a Kind']:
-        tied_players = [player for player in showdown_players if str(player.best_hand_score)[0:3] == str(winners[0].best_hand_score)[0:3]]
+        tied_players = [player for player in showdown_players if
+                        str(player.best_hand_score)[0:3] == str(winners[0].best_hand_score)[0:3]]
         if len(tied_players) == 1:
             return
         for i in range(3, 11, 2):
@@ -165,14 +166,16 @@ def assign_kicker_card(winners, showdown_players):
                 kicker_card_rank = max(card_at_index_list)
                 break
     elif winners[0].best_hand_rank == 'Two Pair':
-        tied_players = [player for player in showdown_players if str(player.best_hand_score)[0:5] == str(winners[0].best_hand_score)[0:5]]
+        tied_players = [player for player in showdown_players if
+                        str(player.best_hand_score)[0:5] == str(winners[0].best_hand_score)[0:5]]
         if len(tied_players) == 1:
             return
         players_last_card_list = [int(str(player.best_hand_score)[5:7]) for player in tied_players]
         if players_last_card_list.count(max(players_last_card_list)) != len(tied_players):
             kicker_card_rank = max(players_last_card_list)
     elif winners[0].best_hand_rank == 'Flush':
-        tied_players = [player for player in showdown_players if str(player.best_hand_score)[0] == str(winners[0].best_hand_score)[0]]
+        tied_players = [player for player in showdown_players if
+                        str(player.best_hand_score)[0] == str(winners[0].best_hand_score)[0]]
         if len(tied_players) == 1:
             return
         for i in range(1, 11, 2):
@@ -205,6 +208,7 @@ def score_high_card(hand):
     score = '1' + ''.join(f'{x:02d}' for x in rank_values)
     return int(score)
 
+
 def score_two_pair(hand):
     """
     All score for hands ranking Two pair start with 3. The next two pairs of digit pairs represent the value of the cards
@@ -225,6 +229,7 @@ def score_two_pair(hand):
         score = '3' + f"{paired_values[0]:02d}{paired_values[1]:02d}{unpaired_value:02d}0000"
         score = int(score)
     return score
+
 
 def score_num_of_kind(hand, n):
     """
@@ -262,6 +267,7 @@ def score_num_of_kind(hand, n):
                 return int(score)
     return score
 
+
 def score_full_house(hand):
     """
     All score for hands ranking Full House start with 7.
@@ -275,7 +281,7 @@ def score_full_house(hand):
     """
     score = 0
     rank_values = [card.rank_value for card in hand]
-    if tuple(rank_values.count(card) for card in set(rank_values)) in [(3, 2), (2,3)]:
+    if tuple(rank_values.count(card) for card in set(rank_values)) in [(3, 2), (2, 3)]:
         if rank_values.count(rank_values[0]) == 3:
             triplet_value = rank_values[0]
             pair_value = rank_values[-1]
@@ -285,6 +291,7 @@ def score_full_house(hand):
         score = '7' + f"{triplet_value:02d}{pair_value:02d}000000"
         score = int(score)
     return score
+
 
 def score_straight(hand):
     """
@@ -303,6 +310,7 @@ def score_straight(hand):
         score = '5' + f'{high_card:02d}00000000'
         score = int(score)
     return score
+
 
 def score_flush(hand):
     """
@@ -324,6 +332,7 @@ def score_flush(hand):
         score = int(score)
     return score
 
+
 def score_straight_flush(hand):
     """
     All score for hands ranking Straight Flush start with 9.
@@ -341,6 +350,7 @@ def score_straight_flush(hand):
         score += score_straight(hand) - 50000000000
     return score
 
+
 def score_royal_flush(hand):
     """
     A score for hands ranking Royal Flush start with 10.
@@ -355,17 +365,3 @@ def score_royal_flush(hand):
         if rank_values == [14, 13, 12, 11, 10]:
             score = 100000000000
     return score
-
-
-
-
-
-
-
-
-
-
-
-
-
-
