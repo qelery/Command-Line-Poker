@@ -53,10 +53,6 @@ class Table:
             return False
         else:
             player.go_all_in()
-            # if self.last_bet < player.bet <= self.raise_amount:
-            #     for active_player in self.active_players:
-            #         if not active_player.is_folded and not active_player.is_all_in:
-            #             active_player.is_locked = False
             self.pot_transfers.append(player.bet)
             # Prevent multiple side pots being created if players go all-in at same amount in same phase
             self.pot_transfers = list(set(self.pot_transfers))
@@ -78,10 +74,6 @@ class Table:
             return False
         else:
             player.go_all_in()
-            # if self.last_bet < player.bet <= self.raise_amount:
-            #     for active_player in self.active_players:
-            #         if not active_player.is_folded and not active_player.is_all_in:
-            #             active_player.is_locked = False
             self.pot_transfers.append(player.bet)
             # Prevent multiple side pots being created if players go all-in at same amount in same phase
             self.pot_transfers = list(set(self.pot_transfers))
@@ -97,10 +89,6 @@ class Table:
             self.last_bet = player.match_bet(self.raise_amount)
         elif move is BettingMove.ALL_IN:
             player.go_all_in()
-            # if self.last_bet < player.bet <= self.raise_amount:
-            #     for active_player in self.active_players:
-            #         if not active_player.is_folded and not active_player.is_all_in:
-            #             active_player.is_locked = False
             self.pot_transfers.append(player.bet)
             # Prevent multiple side pots being created if players go all-in at same amount in same phase
             self.pot_transfers = list(set(self.pot_transfers))
@@ -121,7 +109,7 @@ class Table:
         elif phase in [Phase.TURN, Phase.RIVER]:
             self.raise_amount = self.last_bet + (self.big_blind * 2)
 
-    def calculate_side_pots(self, active_players: list[Player]):
+    def calculate_side_pots(self, active_players: list[Player]) -> None:
         """Determines amount of each side pot and players eligible for each."""
         if self.pot_transfers:
             self.pot_transfers.sort()

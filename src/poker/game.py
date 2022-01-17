@@ -25,12 +25,9 @@ class Game:
         self.players = []
         self.dealer = None
         self.table = Table()
-        self.short_pause = 0
-        self.pause = 0
-        self.long_pause = 0
-        # self.short_pause = 0.5
-        # self.pause = 1.25
-        # self.long_pause = 3.0
+        self.short_pause = 0.5
+        self.pause = 1.25
+        self.long_pause = 3.0
         self.setup()
 
     def play(self) -> None:
@@ -60,7 +57,6 @@ class Game:
         self.table.big_blind = text_prompt.prompt_for_big_blind(min_blind, max_blind)
 
     def create_players(self, player_name, num_computer, starting_chips) -> None:
-        # human = Player(player_name, is_human=True)
         human = Human(player_name)
         self.players.append(human)
         names = ['Homer', 'Bart', 'Lisa', 'Marge', 'Milhouse', 'Moe', 'Maggie', 'Nelson', 'Ralph']
@@ -68,7 +64,6 @@ class Game:
         random.shuffle(computer_names)
         for _ in range(num_computer):
             playing_style = random.choice(list(ComputerPlayingStyle))
-            # computer = ComputerPlayer(computer_names.pop(), is_human=False, playing_style=playing_style)
             computer = Computer(computer_names.pop(), playing_style)
             self.players.append(computer)
         for player in self.players:
@@ -106,15 +101,14 @@ class Game:
         text_prompt.show_shuffling(self.pause)
 
     def set_game_speed(self, is_fast: bool) -> None:
-        pass # for now
-        # if is_fast:
-        #     self.pause = 1.25
-        #     self.long_pause = 3.0
-        #     self.short_pause = 0.5
-        # else:
-        #     self.pause = 2.75
-        #     self.long_pause = 5.0
-        #     self.short_pause = 0.75
+        if is_fast:
+            self.pause = 1.25
+            self.long_pause = 3.0
+            self.short_pause = 0.5
+        else:
+            self.pause = 2.75
+            self.long_pause = 5.0
+            self.short_pause = 0.75
 
     def assign_positions(self) -> None:
         """Assigns the position of the players.
@@ -266,7 +260,6 @@ class Game:
                 betting_index += 1
                 continue
             self.table.update_raise_amount(self.phase)
-            # self.player_moves(betting_player)
             move = betting_player.choose_next_move(self.table.raise_amount, self.table.num_times_raised,
                                                    self.table.last_bet)
             self.table.take_bet(betting_player, move)
@@ -278,10 +271,6 @@ class Game:
                     if person.is_all_in:
                         person.is_locked = True
             elif move is BettingMove.ALL_IN:
-                # if self.table.last_bet < betting_player.bet <= self.table.raise_amount:
-                #     for active_player in active_players:
-                #         if not active_player.is_folded and not active_player.is_all_in:
-                #             active_player.is_locked = False
                 pass
             # if move is BettingMove.FOLDED and betting_player.is_human:
             if move is BettingMove.FOLDED and isinstance(betting_player, Human):
@@ -289,65 +278,6 @@ class Game:
             betting_player.is_locked = True
             betting_index += 1
             text_prompt.show_table(self.players, self.table, 0)
-
-    # def make_bet(self, player, bet_amount):
-    #     """Player makes a bet.
-    #
-    #     Args:
-    #         player (__main__.Player): player making the bet
-    #         bet_amount (int): amount of the bet
-    #     """
-    #     n = abs(player.bet - bet_amount)
-    #     player.chips -= n
-    #     player.bet += n
-    #     self.table.last_bet = player.bet
-
-    # def player_moves(self, player, move=''):
-    #     """Gets player's choice of move (call, raise, fold, etc) and execute it
-    #
-    #     Args:
-    #         player (__main__.Player): player making the move
-    #     """
-    #     if move == '':
-    #         if player.playing_style != human_play:
-    #             text_prompt.show_thinking(player.name, self.short_pause)
-    #         move = player.make_move()
-    #     if move == 'checked' or move == 'called':
-    #         self.make_bet(player, self.table.last_bet)
-    #         text_prompt.show_player_move(player, move, self.pause, player.bet)
-    #     elif move == 'raised' or move == 'bet':
-    #         self.table.num_times_raised += 1
-    #         self.make_bet(player, self.table.raise_amount)
-    #         for active_player in self.active_players:
-    #             if not active_player.is_folded:
-    #                 active_player.is_locked = False
-    #         for person in self.active_players:
-    #             if person.is_all_in:
-    #                 person.is_locked = True
-    #         text_prompt.show_player_move(player, move, self.pause, player.bet)
-    #     elif move == 'all-in':
-    #         player.bet += player.chips
-    #         player.chips = 0
-    #         # If the player's bet enough to raise (even if not in the proper increment)
-    #         if self.table.last_bet < player.bet <= self.table.raise_amount:
-    #             for active_player in self.active_players:
-    #                 if not active_player.is_folded and not active_player.is_all_in:
-    #                     active_player.is_locked = False
-    #         self.table.pot_transfers.append(player.bet)
-    #         # Prevent multiple side pots being created if players go all-in at same amount in same phase
-    #         self.table.pot_transfers = list(set(self.table.pot_transfers))
-    #         if player.bet > self.table.last_bet:
-    #             self.table.last_bet = player.bet
-    #         player.is_all_in = True
-    #         text_prompt.show_player_move(player, move, self.pause)
-    #     elif move == 'folded':
-    #         player.is_folded = True
-    #         text_prompt.show_player_move(player, move, self.pause)
-    #         if player.is_human:
-    #             # Speed up the hand
-    #             self.pause = 1.25
-    #             self.long_pause = 3.0
-    #             self.short_pause = 0.5
 
     def check_hand_over(self) -> bool:
         """Checks if the current hand is over.
@@ -393,21 +323,7 @@ class Game:
     def showdown(self):
         """Runs the showdown phase."""
         text_prompt.show_table(self.players, self.table, 0)
-
-
-
-
-
-
-
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # text_prompt.show_phase_change_alert('Showdown', self.dealer, self.pause)
-
-
-
-
-
         # Divvy chips to the winner(s) of each pot/side pot
         for i in reversed(range(len(self.table.pots))):
             showdown_players = []

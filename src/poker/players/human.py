@@ -43,7 +43,7 @@ class Human(Player):
             prompt = f" >>> Press (c) to call {last_table_bet} chips or (f) to fold.   "
         while choice.lower() not in valid_moves:
             choice = io_utils.input_no_return(prompt)
-        # Return player's choice'
+        # Return player's choice
         choice = choice.lower()
         if 'b' == choice:
             return BettingMove.BET

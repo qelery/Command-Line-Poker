@@ -1,6 +1,10 @@
 # Texas Hold 'Em Poker
 
 Command line implementation of pot-limit Texas Hold 'Em Poker in Python.
+
+## Note from 2022: 
+Functionality is likely broke in some spots as I continue to refactor and unit test this project that was written back in 2019.
+
 # Requirements
 - Python 3.6+
 - If running in Pycharm
