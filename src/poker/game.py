@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import random
 
+from src.poker.deck import Deck
 from src.poker.enums.betting_move import BettingMove
 from src.poker.enums.computer_playing_style import ComputerPlayingStyle
 from src.poker.enums.phase import Phase
-from src.poker.deck import Deck
 from src.poker.players.computer import Computer
 from src.poker.players.human import Human
 from src.poker.players.player import Player
-from src.poker.table import Table
 from src.poker.prompts import text_prompt
-from src.poker.utils import io_utils
+from src.poker.table import Table
 from src.poker.utils import hand_ranking_utils
-
+from src.poker.utils import io_utils
 
 
 class Game:
@@ -25,8 +24,8 @@ class Game:
         self.players = []
         self.dealer = None
         self.table = Table()
-        self.short_pause = 0.5
-        self.pause = 1.25
+        self.short_pause = 1.0
+        self.pause = 2.0
         self.long_pause = 3.0
         self.setup()
 
@@ -91,7 +90,7 @@ class Game:
         self.table.reset(active_players)
         if self.table.check_increase_big_blind():
             text_prompt.clear_screen()
-            text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_table(self.players, self.table)
             text_prompt.show_blind_increase(self.table.big_blind, self.long_pause)
 
     def reset_deck(self) -> None:
@@ -101,14 +100,15 @@ class Game:
         text_prompt.show_shuffling(self.pause)
 
     def set_game_speed(self, is_fast: bool) -> None:
+        pass
         if is_fast:
-            self.pause = 1.25
-            self.long_pause = 3.0
             self.short_pause = 0.5
+            self.pause = 1.0
+            self.long_pause = 1.5
         else:
-            self.pause = 2.75
-            self.long_pause = 5.0
-            self.short_pause = 0.75
+            self.short_pause = 1.0
+            self.pause = 2.0
+            self.long_pause = 3.0
 
     def assign_positions(self) -> None:
         """Assigns the position of the players.
@@ -162,16 +162,16 @@ class Game:
     def deal_cards(self) -> None:
         """Deals cards to the hold and the community."""
         if self.phase is Phase.PREFLOP:
-            text_prompt.show_table(self.players, self.table, 0)  ########################### Why is this pause 0?
-            text_prompt.show_phase_change_alert(self.phase, self.dealer.name, self.pause)
+            text_prompt.show_table(self.players, self.table)
+            text_prompt.show_phase_change_alert(self.phase, self.dealer.name, self.long_pause)
             self.deal_hole()
         elif self.phase is Phase.FLOP:
-            text_prompt.show_phase_change_alert(self.phase, self.dealer, self.pause)
+            text_prompt.show_phase_change_alert(self.phase, self.dealer.name, self.long_pause)
             self.deal_community(3)
         else:
-            text_prompt.show_phase_change_alert(self.phase, self.dealer, self.pause)
+            text_prompt.show_phase_change_alert(self.phase, self.dealer.name, self.long_pause)
             self.deal_community(1)
-        text_prompt.show_table(self.players, self.table, 0)
+        text_prompt.show_table(self.players, self.table)
 
     def deal_hole(self) -> None:
         """Deals two cards to each player.
@@ -211,23 +211,23 @@ class Game:
             if not player.is_folded and not player.is_all_in:
                 player.is_locked = False
         self.table.calculate_side_pots(active_players)
-        text_prompt.show_table(self.players, self.table, 0)
+        text_prompt.show_table(self.players, self.table)
 
     def run_small_blind_bet(self) -> None:
         player = next(player for player in self.players if player.is_SB)
         text_prompt.show_bet_blind(player.name, 'small', self.pause)
         wentAllIn = self.table.take_small_blind(player)
         if wentAllIn:
-            text_prompt.show_player_move(player, 'all-in', self.pause)
-        text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_player_move(player, BettingMove.ALL_IN, self.pause)
+        text_prompt.show_table(self.players, self.table)
 
     def run_big_blind_bet(self) -> None:
         player = next(player for player in self.players if player.is_BB)
         text_prompt.show_bet_blind(player.name, 'big', self.pause)
         wentAllIn = self.table.take_big_blind(player)
         if wentAllIn:
-            text_prompt.show_player_move(player, 'all-in', self.pause)
-        text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_player_move(player, BettingMove.ALL_IN, self.pause)
+        text_prompt.show_table(self.players, self.table)
 
     def get_index_first_act(self) -> int:
         """Determines the index of the first act.
@@ -263,6 +263,7 @@ class Game:
             move = betting_player.choose_next_move(self.table.raise_amount, self.table.num_times_raised,
                                                    self.table.last_bet)
             self.table.take_bet(betting_player, move)
+            text_prompt.show_player_move(betting_player, move, self.pause, betting_player.bet)
             if move is BettingMove.RAISED or move is BettingMove.BET:
                 for active_player in active_players:
                     if not active_player.is_folded:
@@ -277,7 +278,7 @@ class Game:
                 self.set_game_speed(is_fast=True)
             betting_player.is_locked = True
             betting_index += 1
-            text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_table(self.players, self.table)
 
     def check_hand_over(self) -> bool:
         """Checks if the current hand is over.
@@ -302,7 +303,7 @@ class Game:
                 winnings += pot[0]
             winner = unfolded_players[0]
             winner.chips += winnings
-            text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_table(self.players, self.table)
             text_prompt.show_default_winner_fold(winner.name)
         else:
             # If only 1 player is eligible for last side pot (i.e. other players folded/all-in), award player that pot
@@ -312,7 +313,7 @@ class Game:
                     players_eligible_last_pot.append(player)
             if len(players_eligible_last_pot) == 1:
                 hand_winner = players_eligible_last_pot[0]
-                text_prompt.show_table(self.players, self.table, 0)
+                text_prompt.show_table(self.players, self.table)
                 text_prompt.show_default_winner_eligibility(hand_winner.name, len(self.table.pots) - 1)
                 hand_winner.chips += self.table.pots[-1][0]
                 self.table.pots = self.table.pots[:-1]
@@ -322,8 +323,11 @@ class Game:
 
     def showdown(self):
         """Runs the showdown phase."""
-        text_prompt.show_table(self.players, self.table, 0)
+        text_prompt.show_table(self.players, self.table)
+
+        # Need to fix this
         # text_prompt.show_phase_change_alert('Showdown', self.dealer, self.pause)
+
         # Divvy chips to the winner(s) of each pot/side pot
         for i in reversed(range(len(self.table.pots))):
             showdown_players = []
@@ -349,7 +353,7 @@ class Game:
                 player.is_in_game = False
         active_players = self.get_active_players()
         if len(active_players) == 1:
-            text_prompt.show_table(self.players, self.table, 0)
+            text_prompt.show_table(self.players, self.table)
             text_prompt.show_game_winners(self.players, [active_players[0].name])
             return True
         else:
@@ -360,7 +364,7 @@ class Game:
                 if 'n' in user_choice.lower():
                     max_chips = max(self.get_active_players(), key=lambda player: player.chips).chips
                     winners_names = [player.name for player in self.get_active_players() if player.chips == max_chips]
-                    text_prompt.show_table(self.players, self.table, 0)
+                    text_prompt.show_table(self.players, self.table)
                     text_prompt.show_game_winners(self.players, winners_names)
                     return True
                 return False

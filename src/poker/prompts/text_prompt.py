@@ -1,8 +1,11 @@
 from time import sleep
 
+from src.poker.enums.betting_move import BettingMove
 from src.poker.enums.phase import Phase
 from src.poker.players.human import Human
+from src.poker.players.player import Player
 from src.poker.prompts import big_text
+from src.poker.table import Table
 from src.poker.utils.io_utils import clear_screen
 
 
@@ -218,7 +221,7 @@ def show_pot_winners(hand_winners, showdown_players, pot_num):
         print()
 
 
-def show_table(initial_players, table, time):
+def show_table(initial_players: list[Player], table: Table, time: float = 0):
     """Update display with player's stats, community, blinds, and pot.
 
     Parameters:
@@ -238,7 +241,7 @@ def show_table(initial_players, table, time):
 
 
 def show_showdown_results(initial_players, table, hand_winners, showdown_players, pot_num):
-    """Update display and show the winner of the a particular pot in the showdown.
+    """Update display and show the winner of a particular pot in the showdown.
 
     Parameters:
         initial_players (list): all players who began the game
@@ -310,25 +313,25 @@ def show_thinking(player_name, time):
     sleep(time)
 
 
-def show_player_move(player, move, pause: float, bet=None):
+def show_player_move(player: Player, move: BettingMove, pause: float, bet=None):
     """Show player's move choice.
 
     Args:
-        player (__main__.Player): player making the move
-        move (str): move player chose
-        bet (int): amount of bet
-        pause (float): amount of time to pause the game
+        player: The player making the move
+        move: The move the player chose
+        bet: The amount of the bet
+        pause: The amount of time to pause the game
     """
     chips = 'chip' if bet == 1 else 'chips'
-    if move == 'folded':
+    if move is BettingMove.FOLDED:
         print(f' >>> {player.name} folded! ×')
-    elif move == 'checked':
+    elif move is BettingMove.CHECKED:
         print(f' >>> {player.name} checked. √')
-    elif move == 'all-in':
+    elif move is BettingMove.ALL_IN:
         print(f' >>> {player.name} went all-in!')
-    elif move == 'called':
+    elif move is BettingMove.CALLED:
         print(f' >>> {player.name} called {player.bet} {chips}. ←→')
-    elif move == 'bet':
+    elif move is BettingMove.BET:
         print(f' >>> {player.name} bet {player.bet} {chips}. ↑')
     else:
         print(f' >>> {player.name} raised to {player.bet} {chips}. ↑')

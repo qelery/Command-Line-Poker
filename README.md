@@ -2,7 +2,7 @@
 
 Command line implementation of pot-limit Texas Hold 'Em Poker in Python.
 
-## Note from 2022: 
+# Note from 2022: 
 Functionality is likely broke in some spots as I continue to refactor and unit test this project that was written back in 2019.
 
 # Requirements
@@ -25,13 +25,13 @@ Functionality is likely broke in some spots as I continue to refactor and unit t
 * Handles multiple side pots when players go all-in
 * Game ends when only one player has chips remaining
 
-<br>
-<br>
+## Screenshots
 
-![](./images/example1.png)
+ ![](./images/screenshot1.png) 
 
-![](./images/example2.png)
+ ![](./images/screenshot2.png)
 
-![](./images/example3.png)
+ ![](./images/screenshot3.png)
 
-![](./images/example4.png)
+![](./images/screenshot4.png) 
+

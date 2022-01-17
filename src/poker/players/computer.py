@@ -1,5 +1,4 @@
 import random
-import time
 
 from src.poker.enums.betting_move import BettingMove
 from src.poker.enums.computer_playing_style import ComputerPlayingStyle
@@ -25,23 +24,11 @@ class Computer(Player):
             player's choice for their next move
         """
         if self.playing_style is ComputerPlayingStyle.SAFE:
-            move = self.safe_play(table_raise_amount, times_table_raised, last_table_bet)
-            print("COMPUTER SAFE")
-            print(move)
-            time.sleep(.0002)
-            return move
+            return self.safe_play(table_raise_amount, times_table_raised, last_table_bet)
         elif self.playing_style is ComputerPlayingStyle.RISKY:
-            move = self.risky_play(table_raise_amount, times_table_raised, last_table_bet)
-            print("COMPUTER RISKY")
-            print(move)
-            time.sleep(.0002)
-            return move
+            return self.risky_play(table_raise_amount, times_table_raised, last_table_bet)
         else:
-            move = self.random_play(table_raise_amount, times_table_raised, last_table_bet)
-            print("COMPUTER RANDOM")
-            print(move)
-            time.sleep(.0002)
-            return move
+            return self.random_play(table_raise_amount, times_table_raised, last_table_bet)
 
     def risky_play(self, table_raise_amount: int, num_times_table_raised: int, table_last_bet: int) -> BettingMove:
         """Computer choice to check, call, raise, bet, fold, or go all-in. Player more likely to bet and raise."""
