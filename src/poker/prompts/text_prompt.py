@@ -1,6 +1,7 @@
 from time import sleep
 
 from src.poker.enums.phase import Phase
+from src.poker.players.human import Human
 from src.poker.prompts import big_text
 from src.poker.utils.io_utils import clear_screen
 
@@ -72,7 +73,7 @@ def show_player_stats(initial_players, isShowDown=False):
     """Format each player's stats as a single line.
 
     A helper function for show_table().
-    If the game is in the Show Down phase, line displays a little differently.
+    If the game is in the ShowDown phase, line displays a little differently.
 
     Args:
         initial_players (list): all players who began the game
@@ -88,13 +89,16 @@ def show_player_stats(initial_players, isShowDown=False):
             if this_player.is_folded or this_player.hand == []:
                 for j in range(2):
                     hand_str.append('     ')
-            elif this_player.is_human:
+            # elif this_player.is_human:
+            elif isinstance(this_player, Human):
                 for card in this_player.hand:
                     hand_str.append(str(card))
-            elif not this_player.is_human and isShowDown:
+            # elif not this_player.is_human and isShowDown:
+            elif isShowDown and not isinstance(this_player, Human):
                 for card in this_player.hand:
                     hand_str.append(str(card))
-            elif not this_player.is_human and not isShowDown:
+            # elif not this_player.is_human and not isShowDown:
+            elif not isShowDown and not isinstance(this_player, Human):
                 for j in range(len(this_player.hand)):
                     hand_str.append('[###]')
             hand_str = '  '.join(hand_str)

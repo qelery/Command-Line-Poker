@@ -51,7 +51,18 @@ class Card:
         """Returns a readable string representation of a Card.
 
         Example:
-            [A  ♦]
-            [10 ♥]
+            [A ♦]
+            [10♥]
         """
         return f'[{self.rank_symbol:<2}{self.suit_symbol}]'
+
+    def __eq__(self, other: object) -> bool:
+        """Returns true if other card is equal to this one."""
+        if not isinstance(other, Card):
+            return False
+        return (self.rank_value == other.rank_value and
+                self.suit_value == other.suit_value)
+
+    def __hash__(self) -> int:
+        """Returns true if other card is equal to this one."""
+        return hash((self.rank_value, self.suit_value))

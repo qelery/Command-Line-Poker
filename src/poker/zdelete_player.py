@@ -100,7 +100,7 @@ class Player:
         if move == '':
             if player.playing_style != human_play:
                 text_prompt.show_thinking(player.name, self.short_pause)
-            move = player.make_move()
+            move = player.choose_next_move()
         if move == 'checked' or move == 'called':
             self.make_bet(player, self.table.last_bet)
             text_prompt.show_player_move(player, move, self.pause, player.bet)

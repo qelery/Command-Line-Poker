@@ -6,11 +6,14 @@ from src.poker.enums.betting_move import BettingMove
 from src.poker.enums.computer_playing_style import ComputerPlayingStyle
 from src.poker.enums.phase import Phase
 from src.poker.deck import Deck
-from src.poker.player import Player
+from src.poker.players.computer import Computer
+from src.poker.players.human import Human
+from src.poker.players.player import Player
 from src.poker.table import Table
 from src.poker.prompts import text_prompt
 from src.poker.utils import io_utils
 from src.poker.utils import hand_ranking_utils
+
 
 
 class Game:
@@ -57,14 +60,16 @@ class Game:
         self.table.big_blind = text_prompt.prompt_for_big_blind(min_blind, max_blind)
 
     def create_players(self, player_name, num_computer, starting_chips) -> None:
-        human = Player(player_name, is_human=True)
+        # human = Player(player_name, is_human=True)
+        human = Human(player_name)
         self.players.append(human)
         names = ['Homer', 'Bart', 'Lisa', 'Marge', 'Milhouse', 'Moe', 'Maggie', 'Nelson', 'Ralph']
         computer_names = [n for n in names if n != human.name]
         random.shuffle(computer_names)
         for _ in range(num_computer):
             playing_style = random.choice(list(ComputerPlayingStyle))
-            computer = Player(computer_names.pop(), is_human=False, playing_style=playing_style)
+            # computer = ComputerPlayer(computer_names.pop(), is_human=False, playing_style=playing_style)
+            computer = Computer(computer_names.pop(), playing_style)
             self.players.append(computer)
         for player in self.players:
             player.chips = starting_chips
@@ -72,7 +77,8 @@ class Game:
     def reset_for_next_round(self) -> None:
         """Gets players, table, and deck ready to play another hand."""
         active_players = self.get_active_players()
-        if any(player.is_human for player in active_players):
+        # if any(player.is_human for player in active_players):
+        if any(isinstance(player, Human) for player in active_players):
             self.set_game_speed(is_fast=False)
         else:
             self.set_game_speed(is_fast=True)
@@ -81,8 +87,7 @@ class Game:
         self.reset_deck()
 
     def reset_players(self) -> None:
-        active_players = [player for player in self.players if player.is_in_game]
-        for player in active_players:
+        for player in self.players:
             player.reset()
         self.assign_positions()
 
@@ -101,14 +106,15 @@ class Game:
         text_prompt.show_shuffling(self.pause)
 
     def set_game_speed(self, is_fast: bool) -> None:
-        if is_fast:
-            self.pause = 1.25
-            self.long_pause = 3.0
-            self.short_pause = 0.5
-        else:
-            self.pause = 2.75
-            self.long_pause = 5.0
-            self.short_pause = 0.75
+        pass # for now
+        # if is_fast:
+        #     self.pause = 1.25
+        #     self.long_pause = 3.0
+        #     self.short_pause = 0.5
+        # else:
+        #     self.pause = 2.75
+        #     self.long_pause = 5.0
+        #     self.short_pause = 0.75
 
     def assign_positions(self) -> None:
         """Assigns the position of the players.
@@ -142,14 +148,14 @@ class Game:
 
     def shift_positions_left(self) -> None:
         active_players = self.get_active_players()
-        old_dealer_index = [player.is_dealer for player in self.players].index(True)
-        self.players[old_dealer_index].is_dealer = False
+        old_dealer_index = [player is self.dealer for player in self.players].index(True)
         while True:
             old_dealer_index += 1
             player_to_left = self.players[old_dealer_index % len(self.players)]
             if player_to_left in active_players:
+                self.dealer = player_to_left
                 player_to_left.is_dealer = True
-                new_dealer_index = old_dealer_index % len(self.players)
+                new_dealer_index = next(i for i, player in enumerate(active_players) if player.is_dealer)
                 # in 2 player poker, the dealer is SB and acts first pre-flop
                 if len(active_players) == 2:
                     active_players[new_dealer_index].is_SB = True
@@ -261,7 +267,8 @@ class Game:
                 continue
             self.table.update_raise_amount(self.phase)
             # self.player_moves(betting_player)
-            move = betting_player.make_move(self.table.raise_amount, self.table.num_times_raised, self.table.last_bet)
+            move = betting_player.choose_next_move(self.table.raise_amount, self.table.num_times_raised,
+                                                   self.table.last_bet)
             self.table.take_bet(betting_player, move)
             if move is BettingMove.RAISED or move is BettingMove.BET:
                 for active_player in active_players:
@@ -276,7 +283,8 @@ class Game:
                 #         if not active_player.is_folded and not active_player.is_all_in:
                 #             active_player.is_locked = False
                 pass
-            if move is BettingMove.FOLDED and betting_player.is_human:
+            # if move is BettingMove.FOLDED and betting_player.is_human:
+            if move is BettingMove.FOLDED and isinstance(betting_player, Human):
                 self.set_game_speed(is_fast=True)
             betting_player.is_locked = True
             betting_index += 1
@@ -388,7 +396,15 @@ class Game:
 
 
 
+
+
+
+
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # text_prompt.show_phase_change_alert('Showdown', self.dealer, self.pause)
+
+
 
 
 
@@ -402,8 +418,6 @@ class Game:
             for winner in hand_winners:
                 winner.chips += int(self.table.pots[i][0] / len(hand_winners))
             text_prompt.show_showdown_results(self.players, self.table, hand_winners, showdown_players, pot_num=i)
-
-
 
     def check_game_over(self):
         """Checks if the game is over.

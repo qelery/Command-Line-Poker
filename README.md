@@ -10,7 +10,7 @@ Command line implementation of pot-limit Texas Hold 'Em Poker in Python.
 # Run
 - Navigate to root of project folder
 - Execute `> pip install -r requirements.txt`
-- Execute `> python3 -m poker.main`
+- Execute `> python3 -m src.main`
 
 # Game Features
 * User chooses the number of computer players, chips, amount of blinds
